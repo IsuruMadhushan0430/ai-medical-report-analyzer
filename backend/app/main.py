@@ -4,6 +4,7 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 
 from app.pdf_parser import extract_text_from_pdf
 from app.file_validator import validate_pdf
+from app.text_cleaner import clean_text
 
 app = FastAPI(
     title="AI Medical Report Analyzer",
@@ -47,12 +48,20 @@ async def upload_report(file: UploadFile = File(...)):
         extracted_text = extract_text_from_pdf(
             str(file_path)
         )
+        extracted_text = clean_text(extracted_text)
     except ValueError as e:
         file_path.unlink(missing_ok=True)
         raise HTTPException(
             status_code=400,
             detail=str(e)
         )
+
+    if len(extracted_text.strip()) < 20:
+        return {
+            "filename": file.filename,
+            "message": "No readable text found. OCR will be required.",
+            "text": extracted_text
+        }
 
     return {
         "filename": file.filename,

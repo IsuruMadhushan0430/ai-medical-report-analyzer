@@ -1,0 +1,53 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Dependency / packaging artifacts
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Environment and secrets
+.env
+.env.*
+*.env
+.env.local
+
+# Local uploads / generated content
+uploads/
+backend/uploads/
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.tmp
+
+# IDE / editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test / coverage artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/

@@ -1,7 +1,9 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
+import uuid
 from pathlib import Path
+from fastapi import FastAPI, UploadFile, File, HTTPException
 
 from app.pdf_parser import extract_text_from_pdf
+from app.file_validator import validate_pdf
 
 app = FastAPI(
     title="AI Medical Report Analyzer",
@@ -21,22 +23,39 @@ def root():
 @app.post("/upload")
 async def upload_report(file: UploadFile = File(...)):
 
-    if not file.filename.lower().endswith(".pdf"):
+    contents = await file.read()
+
+    try:
+        validate_pdf(
+            file.filename,
+            len(contents)
+        )
+    except ValueError as e:
         raise HTTPException(
             status_code=400,
-            detail="Only PDF files are supported."
+            detail=str(e)
         )
 
-    file_path = UPLOAD_DIR / file.filename
+    safe_filename = f"{uuid.uuid4()}.pdf"
 
-    contents = await file.read()
+    file_path = UPLOAD_DIR / safe_filename
 
     with open(file_path, "wb") as buffer:
         buffer.write(contents)
 
-    extracted_text = extract_text_from_pdf(str(file_path))
+    try:
+        extracted_text = extract_text_from_pdf(
+            str(file_path)
+        )
+    except ValueError as e:
+        file_path.unlink(missing_ok=True)
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
 
     return {
         "filename": file.filename,
+        "text_length": len(extracted_text),
         "text": extracted_text
     }

@@ -3,8 +3,8 @@ from pathlib import Path
 import chromadb
 from sentence_transformers import SentenceTransformer
 
-KNOWLEDGE_BASE_DIR = Path("../../knowledge_base")
-CHROMA_DIR = Path("../../chroma_db")
+KNOWLEDGE_BASE_DIR = Path("../knowledge_base")
+CHROMA_DIR = Path("../chroma_db")
 
 embedding_model = SentenceTransformer(
     "all-MiniLM-L6-v2"
@@ -111,3 +111,15 @@ def search_knowledge(
     )[0]
 
     return documents
+
+def build_context(
+        query: str,
+        top_k: int = 3
+):
+
+    documents = search_knowledge(
+        query,
+        top_k
+    )
+
+    return "\n\n".join(documents)

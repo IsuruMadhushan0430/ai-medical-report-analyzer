@@ -33,6 +33,9 @@ backend/uploads/
 *.jpeg
 *.tmp
 
+#ChromaDB
+chroma_db/
+
 # IDE / editor files
 .vscode/
 .idea/

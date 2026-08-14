@@ -5,6 +5,7 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from app.pdf_parser import extract_text_from_pdf
 from app.file_validator import validate_pdf
 from app.text_cleaner import clean_text
+from app.llm_service import extract_medical_data
 
 app = FastAPI(
     title="AI Medical Report Analyzer",
@@ -49,6 +50,21 @@ async def upload_report(file: UploadFile = File(...)):
             str(file_path)
         )
         extracted_text = clean_text(extracted_text)
+
+        if len(extracted_text.strip()) < 20:
+            return{
+                "filename": file.filename,
+                "message": "Not enough readable text found.",
+                "text": extracted_text
+            }
+
+        try:
+            medical_data = extract_medical_data(extracted_text)
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"AI extraction failed: {str(e)}"
+            )
     except ValueError as e:
         file_path.unlink(missing_ok=True)
         raise HTTPException(
@@ -66,5 +82,6 @@ async def upload_report(file: UploadFile = File(...)):
     return {
         "filename": file.filename,
         "text_length": len(extracted_text),
-        "text": extracted_text
+        "text": extracted_text,
+        "medical_data": medical_data
     }

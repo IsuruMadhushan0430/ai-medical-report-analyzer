@@ -1,0 +1,11 @@
+Hemoglobin is a protein in red blood cells that carries oxygen throughout the body. Hemoglobin values are interpreted using the reference range provided by the laboratory. Reference ranges can vary depending on the laboratory, age, sex, pregnancy status, and other factors.
+
+White blood cell count, commonly called WBC, measures the number of white blood cells in a given volume of blood. White blood cells are involved in immune system function. WBC results should be interpreted using the reference range provided by the laboratory and in the context of the person's overall clinical situation.
+
+Platelets are blood components involved in blood clotting. A platelet count outside the laboratory reference range does not by itself establish a diagnosis. Results should be interpreted together with other findings and clinical information.
+
+Blood glucose measures the amount of glucose in the blood. The interpretation of a glucose result depends on factors such as whether the test was performed fasting, the timing of the test, the laboratory reference range, and the person's clinical context.
+
+Laboratory reference ranges are not universal. Different laboratories may use different methods and reference intervals. The reference range printed on the patient's report should therefore be considered when interpreting a laboratory result.
+
+An abnormal laboratory result does not necessarily mean that a person has a disease. Results can be affected by factors such as medications, food intake, exercise, hydration, timing, laboratory methods, and other health factors. Medical results should be discussed with a qualified healthcare professional when appropriate.

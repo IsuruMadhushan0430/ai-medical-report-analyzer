@@ -1,6 +1,7 @@
 import uuid
 from pathlib import Path
 
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, UploadFile, File, HTTPException
 
 from app.pdf_parser import extract_text_from_pdf
@@ -17,6 +18,16 @@ app = FastAPI(
     version="1.0.0"
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 UPLOAD_DIR = Path("uploads")
 UPLOAD_DIR.mkdir(exist_ok=True)
@@ -83,7 +94,7 @@ async def upload_report(
             extracted_text
         )
 
-        index_knowledge_base()
+        #index_knowledge_base()
 
         analysis = analyze_medical_data(
             medical_data

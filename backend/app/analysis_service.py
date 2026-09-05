@@ -1,48 +1,85 @@
 from app.rag_service import build_context
 from app.llm_service import client
 
-def analyze_medical_data(medical_data: dict):
-    query_parts =[]
-    for test in medical_data.get("tests", []):
-        name = test.get("name")
-        if name:
-            query_parts.append(name)
 
-        query = "Medical laboratory interpretation: " + ", ".join(
-            query_parts
-        )
+def analyze_medical_data(medical_data: dict) -> dict:
 
-        context = build_context(
-            query,
-            top_k=3
-        )
+    tests = medical_data.get("tests", [])
 
-        prompt = f"""
+    test_names = [
+        test.get("name")
+        for test in tests
+        if test.get("name")
+    ]
+
+    query = (
+        "Medical laboratory information about: "
+        + ", ".join(test_names)
+    )
+
+    context = build_context(
+        query=query,
+        top_k=5
+    )
+
+    prompt = f"""
 You are an educational medical report explanation assistant.
-Use the provided laboratory information and retrieved reference context.
-Do not diagnose the patient.
-Do not claim that as abnormal result proves a disease.
-Explain results clearly and cautiously.
+
+Analyze ONLY the information contained in the provided
+medical data and retrieved reference context.
+
+IMPORTANT:
+- Do not diagnose the patient.
+- Do not claim that an abnormal result proves a disease.
+- Do not invent values.
+- Do not invent reference ranges.
+- Use the reference ranges from the report when available.
+- Clearly distinguish reported facts from general information.
+- If information is missing, say that it is unavailable.
+
 Medical data:
 
 {medical_data}
 
-Retrieved reference context:
+Retrieved medical reference context:
 
 {context}
 
-Provide:
+Return your response in this JSON structure:
 
-1. Summary of the reported results
-2. Results outside the provided reference ranges
-3. General educational explanation
-4. Important limitations
-5.Suggestion to discuss concerning results with a qualified healthcare professional when appropriate
+{{
+    "summary": "",
+    "results": [
+        {{
+            "name": "",
+            "value": null,
+            "unit": "",
+            "reference_range": "",
+            "status": "",
+            "explanation": ""
+        }}
+    ],
+    "important_notes": [],
+    "disclaimer": ""
+}}
 """
 
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt
-        )
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=prompt
+    )
 
-        return response.text
+    response_text = response.text.strip()
+
+    if response_text.startswith("```"):
+        response_text = response_text.replace(
+            "```json", ""
+        )
+        response_text = response_text.replace(
+            "```", ""
+        )
+        response_text = response_text.strip()
+
+    import json
+
+    return json.loads(response_text)

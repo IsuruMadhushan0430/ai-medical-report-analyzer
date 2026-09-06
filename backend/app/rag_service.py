@@ -34,6 +34,10 @@ def chunk_text(
         end = start + chunk_size
         chunk = " ".join(words[start:end])
         chunks.append(chunk)
+
+        if end >= len(words):
+            break
+
         start += chunk_size - overlap
 
     return chunks

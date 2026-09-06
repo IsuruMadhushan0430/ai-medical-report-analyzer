@@ -1,5 +1,6 @@
 from app.rag_service import build_context
 from app.llm_service import client
+from google.genai import types
 
 
 def analyze_medical_data(medical_data: dict) -> dict:
@@ -66,7 +67,10 @@ Return your response in this JSON structure:
 
     response = client.models.generate_content(
         model="gemini-2.5-flash",
-        contents=prompt
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json"
+        )
     )
 
     response_text = response.text.strip()

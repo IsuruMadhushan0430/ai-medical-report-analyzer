@@ -1,5 +1,6 @@
 import json
 from google import genai
+from google.genai import types
 from app.config import GEMINI_API_KEY
 
 client = genai.Client(
@@ -45,7 +46,10 @@ Medical report:
 
     response  = client.models.generate_content(
         model="gemini-2.5-flash",
-        contents=prompt
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json"
+        )
     )
 
     response_text = response.text.strip()

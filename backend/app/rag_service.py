@@ -2,6 +2,10 @@ from pathlib import Path
 
 import chromadb
 from sentence_transformers import SentenceTransformer
+from app.config import (
+    CHROMA_DIR,
+    KNOWLEDGE_BASE_DIR
+)
 
 KNOWLEDGE_BASE_DIR = Path("../knowledge_base")
 CHROMA_DIR = Path("../chroma_db")
@@ -123,3 +127,19 @@ def build_context(
     )
 
     return "\n\n".join(documents)
+
+def initialize_rag():
+
+    count = collection.count()
+
+    if count == 0:
+        indexed = index_knowledge_base()
+
+        print(
+            f"RAG initialized with {indexed} chunks."
+        )
+
+    else:
+        print(
+            f"RAG already contains {count} chunks."
+        )

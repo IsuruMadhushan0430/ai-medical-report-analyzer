@@ -1,6 +1,7 @@
+import re
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 
 class PatientInfo(BaseModel):
@@ -9,11 +10,20 @@ class PatientInfo(BaseModel):
     age: Optional[int] = None
     gender: Optional[str] = None
 
+    @field_validator("age", mode="before")
+    @classmethod
+    def normalize_age(cls, value):
+        if isinstance(value, str):
+            match = re.search(r"\d+", value)
+            if match:
+                return int(match.group())
+        return value
+
 
 class MedicalTest(BaseModel):
 
     name: str
-    value: Optional[float] = None
+    value: Optional[float | str] = None
     unit: Optional[str] = None
     reference_range: Optional[str] = None
     status: Optional[str] = "unknown"
@@ -29,7 +39,7 @@ class MedicalData(BaseModel):
 class AnalysisResult(BaseModel):
 
     name: str
-    value: Optional[float] = None
+    value: Optional[float | str] = None
     unit: Optional[str] = None
     reference_range: Optional[str] = None
     status: Optional[str] = None

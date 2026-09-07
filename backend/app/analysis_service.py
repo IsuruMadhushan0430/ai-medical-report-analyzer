@@ -34,6 +34,7 @@ IMPORTANT:
 - Do not claim that an abnormal result proves a disease.
 - Do not invent values.
 - Do not invent reference ranges.
+- Preserve qualitative test values as text; numeric test values may be numbers.
 - Use the reference ranges from the report when available.
 - Clearly distinguish reported facts from general information.
 - If information is missing, say that it is unavailable.

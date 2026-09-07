@@ -19,6 +19,9 @@ Do not diagnose the patient.
 Do not invent missing values.
 Do not assume information that is not present.
 
+Use an integer for patient age when it is reported in years.
+Test values may be numbers or reported text such as "Negative".
+
 Return valid JSON with this structure:
 
 {{

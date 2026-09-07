@@ -1,3 +1,4 @@
+import json
 import uuid
 from pathlib import Path
 from fastapi import (
@@ -8,6 +9,7 @@ from fastapi import (
 )
 
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import ValidationError
 
 from app.analysis_service import analyze_medical_data
 from app.config import UPLOAD_DIR
@@ -142,6 +144,15 @@ async def upload_report(
 
     except HTTPException:
         raise
+
+    except (json.JSONDecodeError, ValidationError) as e:
+        raise HTTPException(
+            status_code=502,
+            detail=(
+                "The AI service returned an invalid response. "
+                f"Please try again. Details: {str(e)}"
+            )
+        )
 
     except Exception as e:
         raise HTTPException(

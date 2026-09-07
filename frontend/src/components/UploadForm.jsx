@@ -7,13 +7,18 @@ function UploadForm({ onResult }) {
 
     const handleFileChange = (event) => {
         const selectedFile = event.target.files[0];
-
+        const allowedTypes = [
+            "application/pdf",
+            "image/jpg",
+            "image/jpeg",
+            "image/png"
+        ];
         if (!selectedFile) {
             return;
         }
 
-        if (selectedFile.type !== "application/pdf") {
-            setError("Please select a PDF file.");
+        if (!allowedTypes.includes(selectedFile.type)) {
+            setError("Only PDF, JPG, JPEG, and PNG files are allowed.");
             setFile(null);
             return;
         }
@@ -30,7 +35,7 @@ function UploadForm({ onResult }) {
 
     const handleUpload = async () => {
         if (!file) {
-            setError("Please select a PDF file.");
+            setError("Please select a supported medical report file.");
             return;
         }
 
@@ -68,13 +73,13 @@ function UploadForm({ onResult }) {
             <h2>Upload Medical Report</h2>
 
             <p className="upload-description">
-                Upload a medical report in PDF format for educational
-                analysis and explanation.
+                Upload a medical report in PDF or image format for
+                educational analysis and explanation.
             </p>
 
             <input
                 type="file"
-                accept=".pdf"
+                accept=".pdf,.jpg,.jpeg,.png"
                 onChange={handleFileChange}
             />
 

@@ -1,5 +1,5 @@
 import uuid
-
+from pathlib import Path
 from fastapi import (
     FastAPI,
     File,
@@ -11,10 +11,11 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.analysis_service import analyze_medical_data
 from app.config import UPLOAD_DIR
-from app.file_validator import validate_pdf
+from app.file_validator import validate_medical_file
 from app.llm_service import extract_medical_data
 from app.models import UploadResponse
 from app.pdf_parser import extract_text_from_pdf
+from app.image_parser import extract_text_from_image
 from app.rag_service import initialize_rag
 from app.text_cleaner import clean_text
 
@@ -61,7 +62,7 @@ async def upload_report(
 
     try:
 
-        validate_pdf(
+        validate_medical_file(
             file.filename,
             len(contents)
         )
@@ -73,13 +74,10 @@ async def upload_report(
             detail=str(e)
         )
 
-    safe_filename = (
-        f"{uuid.uuid4()}.pdf"
-    )
+    extension = Path(file.filename).suffix.lower()
 
-    file_path = (
-        UPLOAD_DIR / safe_filename
-    )
+    safe_filename = f"{uuid.uuid4()}{extension}"
+    file_path = UPLOAD_DIR / safe_filename
 
     try:
 
@@ -90,16 +88,24 @@ async def upload_report(
 
             buffer.write(contents)
 
-        try:
+        if extension == ".pdf":
             extracted_text = (
-                extract_text_from_pdf(
-                    str(file_path)
-                )
-            )
-        except ValueError as e:
+                            extract_text_from_pdf(
+                                str(file_path)
+                            )
+                        )
+
+        elif extension in {".jpg", ".jpeg", ".png"}:
+            extracted_text = (
+                            extract_text_from_image(
+                                str(file_path)
+                            )
+                        )
+
+        else:
             raise HTTPException(
                 status_code=400,
-                detail=str(e)
+                detail="Unsupported file type."
             )
 
         extracted_text = clean_text(
@@ -111,70 +117,40 @@ async def upload_report(
             raise HTTPException(
                 status_code=400,
                 detail=(
-                    "Could not extract enough "
-                    "text from this PDF."
+                    "Could not extract enough text from the report. "
+                    "Please upload a clearer PDF or image."
                 )
             )
 
-        try:
-            medical_data = (
-                extract_medical_data(
-                    extracted_text
-                )
+        medical_data = (
+             extract_medical_data(
+                extracted_text
             )
+        )
 
-            analysis = (
-                analyze_medical_data(
-                    medical_data
-                )
+        analysis = (
+             analyze_medical_data(
+                medical_data
             )
-        except Exception as e:
-            error_message = str(e)
+        )
 
-            if "RESOURCE_EXHAUSTED" in error_message or "429" in error_message:
-                raise HTTPException(
-                    status_code=429,
-                    detail=(
-                        "The AI service quota has been exceeded. "
-                        "Please wait and try again, or configure a Gemini API key "
-                        "with available quota."
-                    ),
-                    headers={"Retry-After": "30"}
-                )
-
-            raise HTTPException(
-                status_code=502,
-                detail=f"AI analysis failed: {error_message}"
-            )
-
-        try:
-            return UploadResponse(
-                filename=file.filename,
-                medical_data=medical_data,
-                analysis=analysis
-            )
-        except Exception as e:
-            raise HTTPException(
-                status_code=502,
-                detail=f"AI response did not match the expected format: {str(e)}"
-            )
+        return {
+            "filename": file.filename,
+            "medical_data": medical_data,
+            "analysis": analysis
+        }
 
     except HTTPException:
-
         raise
 
     except Exception as e:
-
         raise HTTPException(
             status_code=500,
             detail=f"Analysis failed: {str(e)}"
         )
 
     finally:
-
-        file_path.unlink(
-            missing_ok=True
-        )
+        file_path.unlink(missing_ok=True)
 
 @app.get("/health")
 def health_check():

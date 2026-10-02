@@ -5,10 +5,13 @@ from fastapi import (
     FastAPI,
     File,
     HTTPException,
-    UploadFile
+    UploadFile,
+    Form
 )
+from fastapi.responses import FileResponse
 
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
 
 from app.analysis_service import analyze_medical_data
@@ -35,7 +38,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "http://127.0.0.1:5173"
+        "http://127.0.0.1:5173",
+        "http://localhost:5174"
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -45,6 +49,13 @@ app.add_middleware(
 UPLOAD_DIR.mkdir(
     parents=True,
     exist_ok=True
+)
+
+FRONTEND_DIST_DIR = Path(__file__).resolve().parents[2] / "frontend" / "dist"
+app.mount(
+    "/assets",
+    StaticFiles(directory=FRONTEND_DIST_DIR / "assets"),
+    name="frontend-assets"
 )
 
 @app.on_event("startup")
@@ -57,8 +68,15 @@ def startup_event():
     response_model=UploadResponse
 )
 async def upload_report(
-    file: UploadFile = File(...)
+    file: UploadFile = File(...),
+    language: str = Form("en")
 ):
+
+    if language not in ["en", "si"]:
+        raise HTTPException(
+            status_code=400,
+            detail="Unsupported language. Use 'en' or 'si'."
+        )
 
     contents = await file.read()
 
@@ -132,7 +150,8 @@ async def upload_report(
 
         analysis = (
              analyze_medical_data(
-                medical_data
+                medical_data,
+                language=language
             )
         )
 
@@ -162,6 +181,17 @@ async def upload_report(
 
     finally:
         file_path.unlink(missing_ok=True)
+
+@app.get("/")
+def root():
+    frontend_index = (
+        Path(__file__).resolve().parents[2]
+        / "frontend"
+        / "dist"
+        / "index.html"
+    )
+    return FileResponse(frontend_index)
+
 
 @app.get("/health")
 def health_check():

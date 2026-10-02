@@ -1,53 +1,73 @@
+import json
+from google import genai
+
+from app.config import GEMINI_API_KEY
 from app.rag_service import build_context
-from app.llm_service import client
-from google.genai import types
 
 
-def analyze_medical_data(medical_data: dict) -> dict:
+client = genai.Client(api_key=GEMINI_API_KEY)
 
-    tests = medical_data.get("tests", [])
+
+def analyze_medical_data(medical_data: dict, language: str = "en"):
 
     test_names = [
-        test.get("name")
-        for test in tests
+        test.get("name", "")
+        for test in medical_data.get("tests", [])
         if test.get("name")
     ]
 
-    query = (
-        "Medical laboratory information about: "
-        + ", ".join(test_names)
-    )
+    query = " ".join(test_names)
 
-    context = build_context(
-        query=query,
-        top_k=5
-    )
+    context = build_context(query, 3)
+
+    if language == "si":
+        language_instruction = """
+Generate the summary, explanations, important notes, and disclaimer
+in Sinhala language.
+
+Use clear, simple Sinhala that an ordinary patient can understand.
+
+Keep medical test names, abbreviations, units, numerical values,
+and reference ranges unchanged where appropriate.
+
+Do not translate numerical values.
+Do not invent medical information.
+Do not provide a diagnosis.
+"""
+    else:
+        language_instruction = """
+Generate the summary, explanations, important notes, and disclaimer
+in English.
+
+Use clear language that an ordinary patient can understand.
+
+Do not invent medical information.
+Do not provide a diagnosis.
+"""
 
     prompt = f"""
-You are an educational medical report explanation assistant.
+You are a medical report explanation assistant.
 
-Analyze ONLY the information contained in the provided
-medical data and retrieved reference context.
+Your task is to explain the provided medical test results
+using the supplied medical knowledge.
 
 IMPORTANT:
 - Do not diagnose the patient.
-- Do not claim that an abnormal result proves a disease.
-- Do not invent values.
-- Do not invent reference ranges.
-- Preserve qualitative test values as text; numeric test values may be numbers.
-- Use the reference ranges from the report when available.
-- Clearly distinguish reported facts from general information.
-- If information is missing, say that it is unavailable.
+- Do not invent missing values.
+- Do not change numerical test values.
+- Do not change units.
+- Clearly distinguish abnormal results from normal results.
+- The explanation is educational only.
 
-Medical data:
+{language_instruction}
 
-{medical_data}
+MEDICAL DATA:
+{json.dumps(medical_data, indent=2)}
 
-Retrieved medical reference context:
-
+RELEVANT MEDICAL KNOWLEDGE:
 {context}
 
-Return your response in this JSON structure:
+Return ONLY valid JSON using this structure:
 
 {{
     "summary": "",
@@ -68,23 +88,14 @@ Return your response in this JSON structure:
 
     response = client.models.generate_content(
         model="gemini-2.5-flash",
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            response_mime_type="application/json"
-        )
+        contents=prompt
     )
 
     response_text = response.text.strip()
 
     if response_text.startswith("```"):
-        response_text = response_text.replace(
-            "```json", ""
-        )
-        response_text = response_text.replace(
-            "```", ""
-        )
+        response_text = response_text.replace("```json", "")
+        response_text = response_text.replace("```", "")
         response_text = response_text.strip()
-
-    import json
 
     return json.loads(response_text)

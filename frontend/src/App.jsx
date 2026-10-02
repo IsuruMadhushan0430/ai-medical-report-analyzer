@@ -4,39 +4,47 @@ import AnalysisResult from "./components/AnalysisResult";
 
 function App() {
     const [result, setResult] = useState(null);
+    const [language, setLanguage] = useState("en");
 
     return (
         <div className="app">
 
             <header className="header">
-                <div className="container">
-                    <h1>AI Medical Report Analyzer</h1>
+                <h1>
+                    {language === "si"
+                        ? "AI වෛද්‍ය වාර්තා විශ්ලේෂකය"
+                        : "AI Medical Report Analyzer"}
+                </h1>
 
-                    <p>
-                        Upload a medical report and receive
-                        AI-powered educational explanations.
-                    </p>
-                </div>
+                <p>
+                    {language === "si"
+                        ? "කෘත්‍රිම බුද්ධිය භාවිතයෙන් වෛද්‍ය වාර්තා විශ්ලේෂණය"
+                        : "AI-powered medical report analysis"}
+                </p>
             </header>
 
             <main className="container">
 
-                <UploadForm onResult={setResult} />
+                <UploadForm
+                    setResult={setResult}
+                    language={language}
+                    setLanguage={setLanguage}
+                />
 
                 {result && (
-                    <AnalysisResult result={result} />
+                    <AnalysisResult
+                        result={result}
+                        language={language}
+                    />
                 )}
 
             </main>
 
-            <footer className="footer">
+            <footer>
                 <p>
-                    AI Medical Report Analyzer © 2026
-                </p>
-
-                <p>
-                    For educational purposes only. Not a substitute
-                    for professional medical advice.
+                    {language === "si"
+                        ? "අධ්‍යාපනික අරමුණු සඳහා පමණි. මෙය වෛද්‍ය රෝග විනිශ්චයක් නොවේ."
+                        : "For educational purposes only. This is not a medical diagnosis."}
                 </p>
             </footer>
 
